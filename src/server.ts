@@ -1,5 +1,6 @@
 import app from "./app";
 import { prisma } from "./lib/prisma";
+import "./workers/image.worker";
 
 const PORT = process.env.PORT || 3000;
 

@@ -24,6 +24,11 @@ enum CommentStatus {
   REJECTED
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 model Post {
   id         String     @id @default(uuid())
   title      String     @db.VarChar(255)
@@ -34,53 +39,112 @@ model Post {
   status     PostStatus @default(PUBLISHED)
   tags       String[]
   viewCount  Int        @default(0)
-  
   authorId   String
   author     User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
-  comments   Comment[]
+  comments Comment[]
 
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  @@index([authorId]) // Foreign keys should be indexed for faster lookups
-  @@index([status, createdAt]) // Helps in fetching "Latest Published Posts" fast
+  // Foreign keys should be indexed for faster lookups
+  // Helps in fetching "Latest Published Posts" fast
+  @@index([authorId])
+  @@index([status, createdAt])
   @@map("posts")
 }
 
 // User model is required to establish the foreign key relation for authorId
+
 model User {
-  id    String @id @default(uuid())
-  
+  id       String    @id @default(uuid())
   // TODO: Add other user fields here (e.g. name, email, password)
-  
   posts    Post[]
   comments Comment[]
 
+  name          String
+  email         String
+  emailVerified Boolean   @default(false)
+  image         String?
+  role          Role      @default(USER)
+  phone         String?
+  address       String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+
   @@map("users")
+  @@unique([email])
 }
 
 model Comment {
-  id        String        @id @default(uuid())
-  content   String        @db.Text
-  
-  authorId  String
-  author    User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  
-  postId    String
-  post      Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  id       String @id @default(uuid())
+  content  String @db.Text
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  postId   String
+  post     Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
 
-  parentId  String?
-  parent    Comment?      @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies   Comment[]     @relation("CommentReplies")
+  parentId String?
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  Comment[] @relation("CommentReplies")
 
-  status    CommentStatus @default(PENDING)
+  status CommentStatus @default(PENDING)
 
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([authorId])
   @@index([postId])
   @@index([parentId])
   @@map("comments")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
 }

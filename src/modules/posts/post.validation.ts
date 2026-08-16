@@ -14,7 +14,9 @@ const createPostValidationSchema = z.object({
     thumbnail: z.string().optional(),
     isFeatured: z.boolean().optional(),
     status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional(),
-    tags: z.array(z.string()).optional(),
+    tags: z.array(z.string(), {
+      message: "Tags are required",
+    }),
   }),
 });
 
