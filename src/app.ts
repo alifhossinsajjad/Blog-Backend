@@ -9,7 +9,12 @@ import { auth } from "./lib/auth";
 
 const app: Application = express();
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.APP_ORIGIN,
+  credentials: true
+}));
+
+app.use(express.json());
 
 // Add Origin header if missing (for API clients like Postman or Mobile Apps)
 app.use((req, res, next) => {
@@ -24,8 +29,6 @@ app.use("/api/v1/auth", AuthRoutes);
 
 // Better Auth Routes
 app.all("/api/v1/auth/*splat", toNodeHandler(auth));
-
-app.use(express.json());
 
 // Application Routes
 app.use("/api/v1/posts", PostRoutes);

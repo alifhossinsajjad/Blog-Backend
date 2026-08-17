@@ -22,6 +22,15 @@ export const auth = betterAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
     },
   },
+  session: {
+    expiresIn: 60 * 60 * 24 * 7, // 7 days (session validity)
+    updateAge: 60 * 60 * 24, // 1 day (session extends every day if user is active)
+  },
+  advanced: {
+    defaultCookieAttributes: {
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+    },
+  },
   emailVerification: {
     sendOnSignUp: true,
     autoSignInAfterVerification: true,

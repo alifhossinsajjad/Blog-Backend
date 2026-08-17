@@ -28,8 +28,18 @@ const createPost = async (payload: any): Promise<Post> => {
   return result;
 };
 
-const getAllPosts = async (): Promise<Post[]> => {
+const getAllPosts = async (searchTerm?: string): Promise<Post[]> => {
+  const whereCondition = searchTerm
+    ? {
+        OR: [
+          { title: { contains: searchTerm, mode: "insensitive" as const } },
+          { content: { contains: searchTerm, mode: "insensitive" as const } },
+        ],
+      }
+    : {};
+
   const result = await prisma.post.findMany({
+    where: whereCondition,
     include: {
       author: true, // You might want to select specific fields here to avoid sending password hashes later
     },
