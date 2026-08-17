@@ -8,9 +8,6 @@ const createPostValidationSchema = z.object({
     content: z.string({
       message: 'Content is required',
     }),
-    authorId: z.string({
-      message: 'Author ID is required',
-    }),
     thumbnail: z.string().optional(),
     isFeatured: z.boolean().optional(),
     status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional(),

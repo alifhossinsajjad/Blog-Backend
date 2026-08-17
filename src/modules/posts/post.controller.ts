@@ -12,8 +12,10 @@ type ID = {
 const createPost = catchAsync(async (req: Request, res: Response) => {
   const localFilePath = req.file?.path;
   
-  // We do not set req.body.thumbnail here anymore because the image
   // is now saved locally, not on Cloudinary yet. The worker will handle it.
+
+  // Inject the authenticated user's ID
+  req.body.authorId = req.user?.id;
 
   const result = await PostService.createPost(req.body);
 
