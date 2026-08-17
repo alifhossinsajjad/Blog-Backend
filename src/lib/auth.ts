@@ -2,8 +2,10 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "@better-auth/prisma-adapter";
 import { prisma } from "./prisma";
 import { sendEmail } from "../utils/sendEmail";
+import { twoFactor } from "better-auth/plugins";
 
 export const auth = betterAuth({
+  baseURL: process.env.BETTER_AUTH_URL,
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
@@ -12,8 +14,17 @@ export const auth = betterAuth({
     autoSignIn: false,
     requireEmailVerification: true,
   },
+  socialProviders: {
+    google: {
+      prompt: "select_account consent",
+      accessType: "offline",
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+    },
+  },
   emailVerification: {
-    sendOnSignUp : true,
+    sendOnSignUp: true,
+    autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, url, token }, request) => {
       try {
         await sendEmail({
@@ -62,4 +73,9 @@ export const auth = betterAuth({
       },
     },
   },
+  plugins: [
+    twoFactor({
+      issuer: "Blog App",
+    }),
+  ],
 });
