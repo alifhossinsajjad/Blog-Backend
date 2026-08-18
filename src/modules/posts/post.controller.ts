@@ -35,7 +35,8 @@ const createPost = catchAsync(async (req: Request, res: Response) => {
 
 const getAllPosts = catchAsync(async (req: Request, res: Response) => {
   const searchTerm = req.query.searchTerm as string | undefined;
-  const result = await PostService.getAllPosts(searchTerm);
+  const status = req.query.status as string | undefined;
+  const result = await PostService.getAllPosts(searchTerm, status);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
