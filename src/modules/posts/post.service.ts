@@ -28,15 +28,19 @@ const createPost = async (payload: any): Promise<Post> => {
   return result;
 };
 
-const getAllPosts = async (searchTerm?: string): Promise<Post[]> => {
-  const whereCondition = searchTerm
-    ? {
-        OR: [
-          { title: { contains: searchTerm, mode: "insensitive" as const } },
-          { content: { contains: searchTerm, mode: "insensitive" as const } },
-        ],
-      }
-    : {};
+const getAllPosts = async (searchTerm?: string, status?: string): Promise<Post[]> => {
+  const whereCondition: any = {};
+
+  if (searchTerm) {
+    whereCondition.OR = [
+      { title: { contains: searchTerm, mode: "insensitive" as const } },
+      { content: { contains: searchTerm, mode: "insensitive" as const } },
+    ];
+  }
+
+  if (status) {
+    whereCondition.status = status;
+  }
 
   const result = await prisma.post.findMany({
     where: whereCondition,
