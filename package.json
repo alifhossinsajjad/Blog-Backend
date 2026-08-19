@@ -8,7 +8,8 @@
     "start": "tsx src/server.ts",
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "seed": "tsx src/script/seedAdmin.ts"
   },
   "author": "",
   "license": "ISC",

@@ -30,11 +30,12 @@ export const upload = multer({
       file.mimetype === "image/jpeg" ||
       file.mimetype === "image/png" ||
       file.mimetype === "image/jpg" ||
-      file.mimetype === "image/webp"
+      file.mimetype === "image/webp" ||
+      file.mimetype === "image/svg+xml"
     ) {
       cb(null, true);
     } else {
-      cb(new Error("Unsupported file format. Only JPEG, PNG, and WebP are allowed."));
+      cb(new Error("Unsupported file format. Only JPEG, PNG, WebP, and SVG are allowed."));
     }
   },
 });

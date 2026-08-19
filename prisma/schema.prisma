@@ -58,6 +58,7 @@ model Post {
 
 model User {
   id       String    @id @default(uuid())
+  password String?
   // TODO: Add other user fields here (e.g. name, email, password)
   posts    Post[]
   comments Comment[]
