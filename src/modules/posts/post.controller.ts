@@ -36,13 +36,17 @@ const createPost = catchAsync(async (req: Request, res: Response) => {
 const getAllPosts = catchAsync(async (req: Request, res: Response) => {
   const searchTerm = req.query.searchTerm as string | undefined;
   const status = req.query.status as string | undefined;
-  const result = await PostService.getAllPosts(searchTerm, status);
+  const cursor = req.query.cursor as string | undefined;
+  const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+
+  const result = await PostService.getAllPosts(searchTerm, status, cursor, limit);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: "Posts retrieved successfully",
-    data: result,
+    data: result.data,
+    meta: result.meta,
   });
 });
 

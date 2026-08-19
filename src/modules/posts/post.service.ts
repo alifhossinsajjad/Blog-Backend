@@ -28,7 +28,12 @@ const createPost = async (payload: any): Promise<Post> => {
   return result;
 };
 
-const getAllPosts = async (searchTerm?: string, status?: string): Promise<Post[]> => {
+const getAllPosts = async (
+  searchTerm?: string,
+  status?: string,
+  cursor?: string,
+  limit: number = 10
+) => {
   const whereCondition: any = {};
 
   if (searchTerm) {
@@ -44,11 +49,29 @@ const getAllPosts = async (searchTerm?: string, status?: string): Promise<Post[]
 
   const result = await prisma.post.findMany({
     where: whereCondition,
+    take: limit + 1, // Fetch an extra record to check if there is a next page
+    ...(cursor && { cursor: { id: cursor } }),
+    skip: cursor ? 1 : 0, // Skip the cursor post itself
+    orderBy: {
+      createdAt: "desc", // Newest posts first
+    },
     include: {
       author: true, // You might want to select specific fields here to avoid sending password hashes later
     },
   });
-  return result;
+
+  let nextCursor: string | null = null;
+  if (result.length > limit) {
+    const nextItem = result.pop(); // Remove the extra record from results
+    nextCursor = nextItem!.id;
+  }
+
+  return {
+    data: result,
+    meta: {
+      nextCursor,
+    },
+  };
 };
 
 const getPostById = async (id: string): Promise<Post | null> => {
