@@ -1,5 +1,7 @@
 import { Post } from "../../../generated/prisma/client";
 import { prisma } from "../../lib/prisma";
+import AppError from "../../errors/AppError";
+import httpStatus from "http-status";
 
 // Helper to generate a slug from title
 const generateSlug = (title: string) => {
@@ -28,12 +30,15 @@ const createPost = async (payload: any): Promise<Post> => {
   return result;
 };
 
-const getAllPosts = async (
-  searchTerm?: string,
-  status?: string,
-  cursor?: string,
-  limit: number = 10
-) => {
+export interface IPostFilters {
+  searchTerm?: string | undefined;
+  status?: string | undefined;
+  cursor?: string | undefined;
+  limit?: number;
+}
+
+const getAllPosts = async (filters: IPostFilters) => {
+  const { searchTerm, status, cursor, limit = 10 } = filters;
   const whereCondition: any = {};
 
   if (searchTerm) {
@@ -74,12 +79,25 @@ const getAllPosts = async (
   };
 };
 
-const getPostById = async (id: string): Promise<Post | null> => {
-  const result = await prisma.post.findUnique({
-    where: { id },
-    include: { author: true },
-  });
-  return result;
+const getPostById = async (id: string): Promise<Post> => {
+  try {
+    const result = await prisma.post.update({
+      where: { id },
+      data: {
+        viewCount: {
+          increment: 1,
+        },
+      },
+      include: { author: true },
+    });
+
+    return result;
+  } catch (error: any) {
+    if (error.code === "P2025") {
+      throw new AppError(httpStatus.NOT_FOUND, "Post not found!");
+    }
+    throw error;
+  }
 };
 
 const updatePost = async (
