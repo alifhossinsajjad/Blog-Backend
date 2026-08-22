@@ -61,7 +61,27 @@ const getAllPosts = async (filters: IPostFilters) => {
       createdAt: "desc", // Newest posts first
     },
     include: {
+      _count: {
+        select: { comments: true }
+      },
       author: true, // You might want to select specific fields here to avoid sending password hashes later
+      comments: {
+        where: { parentId: null },
+        include: {
+          author: {
+            select: { id: true, name: true, image: true },
+          },
+          replies: {
+            include: {
+              author: {
+                select: { id: true, name: true, image: true },
+              },
+            },
+            orderBy: { createdAt: "asc" },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      },
     },
   });
 
@@ -88,7 +108,29 @@ const getPostById = async (id: string): Promise<Post> => {
           increment: 1,
         },
       },
-      include: { author: true },
+      include: {
+        _count: {
+          select: { comments: true }
+        },
+        author: true,
+        comments: {
+          where: { parentId: null },
+          include: {
+            author: {
+              select: { id: true, name: true, image: true },
+            },
+            replies: {
+              include: {
+                author: {
+                  select: { id: true, name: true, image: true },
+                },
+              },
+              orderBy: { createdAt: "asc" },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        },
+      },
     });
 
     return result;
