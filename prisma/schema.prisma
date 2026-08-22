@@ -94,7 +94,7 @@ model Comment {
   parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies  Comment[] @relation("CommentReplies")
 
-  status CommentStatus @default(PENDING)
+  status CommentStatus @default(APPROVED)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -134,6 +134,7 @@ model Account {
   refreshTokenExpiresAt DateTime?
   scope                 String?
   password              String?
+  issuer                String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
