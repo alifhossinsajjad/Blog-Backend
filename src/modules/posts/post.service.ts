@@ -33,12 +33,13 @@ const createPost = async (payload: any): Promise<Post> => {
 export interface IPostFilters {
   searchTerm?: string | undefined;
   status?: string | undefined;
+  authorId?: string | undefined;
   cursor?: string | undefined;
   limit?: number;
 }
 
 const getAllPosts = async (filters: IPostFilters) => {
-  const { searchTerm, status, cursor, limit = 10 } = filters;
+  const { searchTerm, status, authorId, cursor, limit = 10 } = filters;
   const whereCondition: any = {};
 
   if (searchTerm) {
@@ -50,6 +51,10 @@ const getAllPosts = async (filters: IPostFilters) => {
 
   if (status) {
     whereCondition.status = status;
+  }
+
+  if (authorId) {
+    whereCondition.authorId = authorId;
   }
 
   const result = await prisma.post.findMany({

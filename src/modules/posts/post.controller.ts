@@ -52,6 +52,26 @@ const getAllPosts = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getMyPosts = catchAsync(async (req: Request, res: Response) => {
+  const filters = {
+    searchTerm: req.query.searchTerm as string | undefined,
+    status: req.query.status as string | undefined,
+    authorId: req.user?.id,
+    cursor: req.query.cursor as string | undefined,
+    limit: req.query.limit ? parseInt(req.query.limit as string) : 10,
+  };
+
+  const result = await PostService.getAllPosts(filters);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "My posts retrieved successfully",
+    data: result.data,
+    meta: result.meta,
+  });
+});
+
 const getPostById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params as ID;
   const result = await PostService.getPostById(id);
@@ -98,6 +118,7 @@ const deletePost = catchAsync(async (req: Request, res: Response) => {
 export const PostController = {
   createPost,
   getAllPosts,
+  getMyPosts,
   getPostById,
   updatePost,
   deletePost,
