@@ -10,7 +10,7 @@ type ID = {
 
 const createComment = catchAsync(async (req: Request, res: Response) => {
   const authorId = req.user?.id;
-  
+
   const result = await CommentService.createComment(authorId, req.body);
 
   sendResponse(res, {
@@ -61,7 +61,12 @@ const updateComment = catchAsync(async (req: Request, res: Response) => {
   const authorId = req.user?.id;
   const userRole = req.user?.role;
 
-  const result = await CommentService.updateComment(id, authorId, userRole, req.body);
+  const result = await CommentService.updateComment(
+    id,
+    authorId,
+    userRole,
+    req.body,
+  );
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
