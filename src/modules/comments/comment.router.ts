@@ -20,6 +20,14 @@ router.get("/", CommentController.getAllComments);
 // Get replies for a specific comment
 router.get("/:id/replies", CommentController.getReplies);
 
+// Moderate a comment (Admin only)
+router.patch(
+  "/:id/status",
+  auth("ADMIN"),
+  validateRequest(CommentValidation.moderateCommentValidationSchema),
+  CommentController.moderateComment,
+);
+
 // Update a comment (protected, author or admin)
 router.patch(
   "/:id",

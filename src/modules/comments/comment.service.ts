@@ -149,19 +149,53 @@ const updateComment = async (
     throw new AppError(httpStatus.NOT_FOUND, "Comment not found!");
   }
 
-  // Only the author can update their own comment, or an ADMIN can update the status
+  // Only the author can update their own comment, or an ADMIN can update it
   if (existingComment.authorId !== authorId && userRole !== "ADMIN") {
     throw new AppError(httpStatus.FORBIDDEN, "You do not have permission to update this comment");
   }
 
-  // If user is not admin, they cannot update the status
-  if (userRole !== "ADMIN" && payload.status && payload.status !== existingComment.status) {
-      throw new AppError(httpStatus.FORBIDDEN, "You do not have permission to change comment status");
-  }
-
+  // Only allow updating content in this route
   const result = await prisma.comment.update({
     where: { id },
-    data: payload,
+    data: {
+      ...(payload.content !== undefined && { content: payload.content }),
+    },
+  });
+
+  return result;
+};
+
+const moderateComment = async (
+  id: string,
+  status: "PENDING" | "APPROVED" | "REJECTED",
+): Promise<Comment> => {
+  const existingComment = await prisma.comment.findUnique({
+    where: { id },
+  });
+
+  if (!existingComment) {
+    throw new AppError(httpStatus.NOT_FOUND, "Comment not found!");
+  }
+
+  // Prevent redundant database updates if the status is already the same
+  if (existingComment.status === status) {
+    throw new AppError(httpStatus.BAD_REQUEST, `Comment is already ${status}`);
+  }
+
+  // Use a transaction so both the comment and its replies are updated together
+  const result = await prisma.$transaction(async (tx) => {
+    const updatedComment = await tx.comment.update({
+      where: { id },
+      data: { status },
+    });
+
+    // Apply the status to all replies as well
+    await tx.comment.updateMany({
+      where: { parentId: id },
+      data: { status },
+    });
+
+    return updatedComment;
   });
 
   return result;
@@ -192,5 +226,6 @@ export const CommentService = {
   getAllComments,
   getRepliesByCommentId,
   updateComment,
+  moderateComment,
   deleteComment,
 };

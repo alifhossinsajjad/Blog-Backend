@@ -15,11 +15,19 @@ const createCommentValidationSchema = z.object({
 const updateCommentValidationSchema = z.object({
   body: z.object({
     content: z.string().optional(),
-    status: z.enum(["PENDING", "APPROVED", "REJECTED"]).optional(),
+  }),
+});
+
+const moderateCommentValidationSchema = z.object({
+  body: z.object({
+    status: z.enum(["PENDING", "APPROVED", "REJECTED"], {
+      message: "Status is required for moderation",
+    }),
   }),
 });
 
 export const CommentValidation = {
   createCommentValidationSchema,
   updateCommentValidationSchema,
+  moderateCommentValidationSchema,
 };

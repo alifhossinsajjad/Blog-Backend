@@ -71,6 +71,20 @@ const updateComment = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const moderateComment = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params as ID;
+  const { status } = req.body;
+
+  const result = await CommentService.moderateComment(id, status);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: `Comment status updated to ${status}`,
+    data: result,
+  });
+});
+
 const deleteComment = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params as ID;
   const authorId = req.user?.id;
@@ -91,5 +105,6 @@ export const CommentController = {
   getAllComments,
   getReplies,
   updateComment,
+  moderateComment,
   deleteComment,
 };
