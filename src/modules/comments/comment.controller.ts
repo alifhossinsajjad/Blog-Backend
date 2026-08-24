@@ -10,7 +10,6 @@ type ID = {
 
 const createComment = catchAsync(async (req: Request, res: Response) => {
   const authorId = req.user?.id;
-
   const result = await CommentService.createComment(authorId, req.body);
 
   sendResponse(res, {

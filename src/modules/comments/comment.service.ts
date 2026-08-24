@@ -149,11 +149,16 @@ const updateComment = async (
     throw new AppError(httpStatus.NOT_FOUND, "Comment not found!");
   }
 
+<<<<<<< HEAD
   // Only the author can update their own comment, or an ADMIN can update it
+=======
+  // Only the author can update their own comment, or an ADMIN can update the status
+>>>>>>> 36b591422a1c82389512473556551c0e8992caa5
   if (existingComment.authorId !== authorId && userRole !== "ADMIN") {
     throw new AppError(httpStatus.FORBIDDEN, "You do not have permission to update this comment");
   }
 
+<<<<<<< HEAD
   // Only allow updating content in this route
   const result = await prisma.comment.update({
     where: { id },
@@ -196,6 +201,16 @@ const moderateComment = async (
     });
 
     return updatedComment;
+=======
+  // If user is not admin, they cannot update the status
+  if (userRole !== "ADMIN" && payload.status && payload.status !== existingComment.status) {
+      throw new AppError(httpStatus.FORBIDDEN, "You do not have permission to change comment status");
+  }
+
+  const result = await prisma.comment.update({
+    where: { id },
+    data: payload,
+>>>>>>> 36b591422a1c82389512473556551c0e8992caa5
   });
 
   return result;
@@ -226,6 +241,9 @@ export const CommentService = {
   getAllComments,
   getRepliesByCommentId,
   updateComment,
+<<<<<<< HEAD
   moderateComment,
+=======
+>>>>>>> 36b591422a1c82389512473556551c0e8992caa5
   deleteComment,
 };
