@@ -53,11 +53,16 @@ const getAllComments = async (filters: ICommentFilters) => {
   if (postId) {
     whereCondition.postId = postId;
   }
-  
+
   if (authorId) {
     whereCondition.authorId = authorId;
   }
-  
+
+  // Always hide blocked users' comments
+  whereCondition.author = {
+    status: "ACTIVE",
+  };
+
   // By default, if filtering by post, get only top-level comments.
   // If fetching by authorId, they probably want to see ALL their comments including replies.
   if (!authorId) {
@@ -101,7 +106,11 @@ const getAllComments = async (filters: ICommentFilters) => {
   };
 };
 
-const getRepliesByCommentId = async (commentId: string, limit: number = 20, cursor?: string) => {
+const getRepliesByCommentId = async (
+  commentId: string,
+  limit: number = 20,
+  cursor?: string,
+) => {
   const result = await prisma.comment.findMany({
     where: { parentId: commentId },
     take: limit + 1,
@@ -149,16 +158,14 @@ const updateComment = async (
     throw new AppError(httpStatus.NOT_FOUND, "Comment not found!");
   }
 
-<<<<<<< HEAD
   // Only the author can update their own comment, or an ADMIN can update it
-=======
-  // Only the author can update their own comment, or an ADMIN can update the status
->>>>>>> 36b591422a1c82389512473556551c0e8992caa5
   if (existingComment.authorId !== authorId && userRole !== "ADMIN") {
-    throw new AppError(httpStatus.FORBIDDEN, "You do not have permission to update this comment");
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You do not have permission to update this comment",
+    );
   }
 
-<<<<<<< HEAD
   // Only allow updating content in this route
   const result = await prisma.comment.update({
     where: { id },
@@ -201,22 +208,16 @@ const moderateComment = async (
     });
 
     return updatedComment;
-=======
-  // If user is not admin, they cannot update the status
-  if (userRole !== "ADMIN" && payload.status && payload.status !== existingComment.status) {
-      throw new AppError(httpStatus.FORBIDDEN, "You do not have permission to change comment status");
-  }
-
-  const result = await prisma.comment.update({
-    where: { id },
-    data: payload,
->>>>>>> 36b591422a1c82389512473556551c0e8992caa5
   });
 
   return result;
 };
 
-const deleteComment = async (id: string, authorId: string, userRole: string): Promise<Comment> => {
+const deleteComment = async (
+  id: string,
+  authorId: string,
+  userRole: string,
+): Promise<Comment> => {
   const existingComment = await prisma.comment.findUnique({
     where: { id },
   });
@@ -226,7 +227,10 @@ const deleteComment = async (id: string, authorId: string, userRole: string): Pr
   }
 
   if (existingComment.authorId !== authorId && userRole !== "ADMIN") {
-    throw new AppError(httpStatus.FORBIDDEN, "You do not have permission to delete this comment");
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You do not have permission to delete this comment",
+    );
   }
 
   const result = await prisma.comment.delete({
@@ -241,9 +245,6 @@ export const CommentService = {
   getAllComments,
   getRepliesByCommentId,
   updateComment,
-<<<<<<< HEAD
   moderateComment,
-=======
->>>>>>> 36b591422a1c82389512473556551c0e8992caa5
   deleteComment,
 };

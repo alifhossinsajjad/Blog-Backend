@@ -57,7 +57,13 @@ const getAllPosts = async (filters: IPostFilters) => {
     whereCondition.authorId = authorId;
   }
 
-  const result = await prisma.post.findMany({
+  // Always hide blocked users' posts, even from themselves in /my-posts
+  whereCondition.author = {
+    status: "ACTIVE",
+  };
+
+  const [result, total] = await Promise.all([
+    prisma.post.findMany({
     where: whereCondition,
     take: limit + 1, // Fetch an extra record to check if there is a next page
     ...(cursor && { cursor: { id: cursor } }),
@@ -88,7 +94,11 @@ const getAllPosts = async (filters: IPostFilters) => {
         orderBy: { createdAt: "desc" },
       },
     },
-  });
+  }),
+    prisma.post.count({
+      where: whereCondition,
+    }),
+  ]);
 
   let nextCursor: string | null = null;
   if (result.length > limit) {
@@ -100,6 +110,7 @@ const getAllPosts = async (filters: IPostFilters) => {
     data: result,
     meta: {
       nextCursor,
+      total,
     },
   };
 };
@@ -149,8 +160,25 @@ const getPostById = async (id: string): Promise<Post> => {
 
 const updatePost = async (
   id: string,
+  authorId: string,
+  userRole: string,
   payload: Partial<Post>,
 ): Promise<Post> => {
+  const existingPost = await prisma.post.findUnique({
+    where: { id },
+  });
+
+  if (!existingPost) {
+    throw new AppError(httpStatus.NOT_FOUND, "Post not found!");
+  }
+
+  if (existingPost.authorId !== authorId && userRole !== "ADMIN") {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You do not have permission to update this post",
+    );
+  }
+
   const result = await prisma.post.update({
     where: { id },
     data: payload,
@@ -158,7 +186,26 @@ const updatePost = async (
   return result;
 };
 
-const deletePost = async (id: string): Promise<Post> => {
+const deletePost = async (
+  id: string, 
+  authorId: string, 
+  userRole: string
+): Promise<Post> => {
+  const existingPost = await prisma.post.findUnique({
+    where: { id },
+  });
+
+  if (!existingPost) {
+    throw new AppError(httpStatus.NOT_FOUND, "Post not found!");
+  }
+
+  if (existingPost.authorId !== authorId && userRole !== "ADMIN") {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You do not have permission to delete this post",
+    );
+  }
+
   const result = await prisma.post.delete({
     where: { id },
   });

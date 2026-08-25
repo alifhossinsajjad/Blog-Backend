@@ -24,6 +24,11 @@ enum CommentStatus {
   REJECTED
 }
 
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+}
+
 enum Role {
   USER
   ADMIN
@@ -65,13 +70,14 @@ model User {
 
   name          String
   email         String
-  emailVerified Boolean   @default(false)
+  emailVerified Boolean    @default(false)
   image         String?
-  role          Role      @default(USER)
+  role          Role       @default(USER)
+  status        UserStatus @default(ACTIVE)
   phone         String?
   address       String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
   sessions      Session[]
   accounts      Account[]
 

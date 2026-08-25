@@ -87,8 +87,10 @@ const getPostById = catchAsync(async (req: Request, res: Response) => {
 const updatePost = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params as ID;
   const localFilePath = req.file?.path;
+  const authorId = req.user?.id;
+  const userRole = req.user?.role as string;
 
-  const result = await PostService.updatePost(id, req.body);
+  const result = await PostService.updatePost(id, authorId, userRole, req.body);
 
   if (localFilePath) {
     // Add job to BullMQ without awaiting
@@ -105,7 +107,10 @@ const updatePost = catchAsync(async (req: Request, res: Response) => {
 
 const deletePost = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params as ID;
-  const result = await PostService.deletePost(id);
+  const authorId = req.user?.id;
+  const userRole = req.user?.role as string;
+  
+  const result = await PostService.deletePost(id, authorId, userRole);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

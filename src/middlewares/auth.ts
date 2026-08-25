@@ -4,6 +4,7 @@ import AppError from "../errors/AppError";
 import catchAsync from "../utils/catchAsync";
 import { auth as betterAuth } from "../lib/auth";
 import { fromNodeHeaders } from "better-auth/node";
+import { prisma } from "../lib/prisma";
 
 export const auth = (...requiredRoles: string[]) => {
   return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -13,6 +14,19 @@ export const auth = (...requiredRoles: string[]) => {
 
     if (!session || !session.user) {
       throw new AppError(httpStatus.UNAUTHORIZED, "You are not authorized");
+    }
+
+    // Double check user status in the database to instantly reject blocked users
+    const dbUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { status: true },
+    });
+
+    if (!dbUser || dbUser.status === "BLOCKED") {
+      throw new AppError(
+        httpStatus.FORBIDDEN,
+        "Your account has been deactivated. Please contact support.",
+      );
     }
 
     // Role verification

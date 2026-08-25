@@ -5,6 +5,7 @@ import notFound from "./middlewares/notFound";
 import { PostRoutes } from "./modules/posts/post.router";
 import { AuthRoutes } from "./modules/auth/auth.route";
 import { CommentRoutes } from "./modules/comments/comment.router";
+import { UserRoutes } from "./modules/users/user.router";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth";
 
@@ -32,6 +33,7 @@ app.use("/api/v1/auth", AuthRoutes);
 app.all("/api/v1/auth/*splat", toNodeHandler(auth));
 
 // Application Routes
+app.use("/api/v1/users", UserRoutes);
 app.use("/api/v1/posts", PostRoutes);
 app.use("/api/v1/comments", CommentRoutes);
 
