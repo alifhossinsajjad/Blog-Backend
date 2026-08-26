@@ -11,7 +11,7 @@ type ID = {
 
 const createPost = catchAsync(async (req: Request, res: Response) => {
   const localFilePath = req.file?.path;
-  
+
   // is now saved locally, not on Cloudinary yet. The worker will handle it.
 
   // Inject the authenticated user's ID
@@ -28,7 +28,8 @@ const createPost = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,
-    message: "Post created successfully. Image is processing in the background.",
+    message:
+      "Post created successfully. Image is processing in the background.",
     data: result,
   });
 });
@@ -109,13 +110,24 @@ const deletePost = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params as ID;
   const authorId = req.user?.id;
   const userRole = req.user?.role as string;
-  
+
   const result = await PostService.deletePost(id, authorId, userRole);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: "Post deleted successfully",
+    data: result,
+  });
+});
+
+const getPostStats = catchAsync(async (req: Request, res: Response) => {
+  const result = await PostService.getStats();
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Post stats retrieved successfully",
     data: result,
   });
 });
@@ -127,4 +139,5 @@ export const PostController = {
   getPostById,
   updatePost,
   deletePost,
+  getPostStats,
 };

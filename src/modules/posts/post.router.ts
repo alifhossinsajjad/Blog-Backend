@@ -25,6 +25,8 @@ router.get("/", PostController.getAllPosts);
 
 router.get("/my-posts", auth("USER", "ADMIN"), PostController.getMyPosts);
 
+router.get("/dashboard/stats", auth("ADMIN"), PostController.getPostStats);
+
 router.get("/:id", PostController.getPostById);
 
 router.patch(
