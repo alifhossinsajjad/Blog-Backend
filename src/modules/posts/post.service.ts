@@ -64,37 +64,37 @@ const getAllPosts = async (filters: IPostFilters) => {
 
   const [result, total] = await Promise.all([
     prisma.post.findMany({
-    where: whereCondition,
-    take: limit + 1, // Fetch an extra record to check if there is a next page
-    ...(cursor && { cursor: { id: cursor } }),
-    skip: cursor ? 1 : 0, // Skip the cursor post itself
-    orderBy: {
-      createdAt: "desc", // Newest posts first
-    },
-    include: {
-      _count: {
-        select: { comments: true }
+      where: whereCondition,
+      take: limit + 1, // Fetch an extra record to check if there is a next page
+      ...(cursor && { cursor: { id: cursor } }),
+      skip: cursor ? 1 : 0, // Skip the cursor post itself
+      orderBy: {
+        createdAt: "desc", // Newest posts first
       },
-      author: true, // You might want to select specific fields here to avoid sending password hashes later
-      comments: {
-        where: { parentId: null },
-        include: {
-          author: {
-            select: { id: true, name: true, image: true },
-          },
-          replies: {
-            include: {
-              author: {
-                select: { id: true, name: true, image: true },
-              },
-            },
-            orderBy: { createdAt: "asc" },
-          },
+      include: {
+        _count: {
+          select: { comments: true },
         },
-        orderBy: { createdAt: "desc" },
+        author: true, // You might want to select specific fields here to avoid sending password hashes later
+        comments: {
+          where: { parentId: null },
+          include: {
+            author: {
+              select: { id: true, name: true, image: true },
+            },
+            replies: {
+              include: {
+                author: {
+                  select: { id: true, name: true, image: true },
+                },
+              },
+              orderBy: { createdAt: "asc" },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        },
       },
-    },
-  }),
+    }),
     prisma.post.count({
       where: whereCondition,
     }),
@@ -126,7 +126,7 @@ const getPostById = async (id: string): Promise<Post> => {
       },
       include: {
         _count: {
-          select: { comments: true }
+          select: { comments: true },
         },
         author: true,
         comments: {
@@ -187,9 +187,9 @@ const updatePost = async (
 };
 
 const deletePost = async (
-  id: string, 
-  authorId: string, 
-  userRole: string
+  id: string,
+  authorId: string,
+  userRole: string,
 ): Promise<Post> => {
   const existingPost = await prisma.post.findUnique({
     where: { id },
@@ -212,10 +212,75 @@ const deletePost = async (
   return result;
 };
 
+const getStats = async () => {
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+  // 🚀 Senior Engineer Approach: Execute all independent database queries concurrently using Promise.all
+  // This drastically reduces the API response time compared to awaiting them sequentially.
+  const [
+    totalPosts,
+    totalUsers,
+    totalComments,
+    viewsAggregation,
+    recentPosts,
+    userStatusCounts,
+  ] = await Promise.all([
+    prisma.post.count(),
+    prisma.user.count(),
+    prisma.comment.count(),
+    prisma.post.aggregate({
+      _sum: { viewCount: true },
+    }),
+    prisma.post.findMany({
+      where: { createdAt: { gte: sixMonthsAgo } },
+      select: { createdAt: true },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.user.groupBy({
+      by: ['status'],
+      _count: { status: true },
+    })
+  ]);
+
+  const totalViews = viewsAggregation._sum.viewCount || 0;
+
+  // Transform user status counts into a readable format (e.g., { ACTIVE: 10, BLOCKED: 2 })
+  const userStats = userStatusCounts.reduce((acc, curr) => {
+    acc[curr.status] = curr._count.status;
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Group posts by month for the line/bar chart
+  const postsByMonth = recentPosts.reduce((acc: Record<string, number>, post) => {
+    const month = post.createdAt.toLocaleString("default", { month: "short", year: "numeric" });
+    acc[month] = (acc[month] || 0) + 1;
+    return acc;
+  }, {});
+
+  const graphData = Object.keys(postsByMonth).map((month) => ({
+    name: month,
+    posts: postsByMonth[month],
+  }));
+
+  return {
+    overview: {
+      totalPosts,
+      totalUsers,
+      totalComments,
+      totalViews,
+      activeUsers: userStats["ACTIVE"] || 0,
+      blockedUsers: userStats["BLOCKED"] || 0,
+    },
+    graphData,
+  };
+};
+
 export const PostService = {
   createPost,
   getAllPosts,
   getPostById,
   updatePost,
   deletePost,
+  getStats,
 };
