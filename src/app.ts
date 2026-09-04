@@ -8,8 +8,25 @@ import { CommentRoutes } from "./modules/comments/comment.router";
 import { UserRoutes } from "./modules/users/user.router";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import morgan from "morgan";
+import { stream } from "./utils/logger";
 
 const app: Application = express();
+
+// Security Middlewares
+app.use(helmet());
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    limit: 100, // Limit each IP to 100 requests per windowMs
+    message: "Too many requests from this IP, please try again later.",
+  })
+);
+
+// HTTP Logging Middleware
+app.use(morgan("combined", { stream }));
 
 app.use(cors({
   origin: process.env.APP_ORIGIN,
