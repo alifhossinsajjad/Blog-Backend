@@ -1,4 +1,5 @@
 import express, { Application, Request, Response } from "express";
+import { prisma } from "./lib/prisma";
 import cors from "cors";
 import globalErrorHandler from "./middlewares/globalErrorHandler";
 import notFound from "./middlewares/notFound";
@@ -43,8 +44,25 @@ app.use((req, res, next) => {
   next();
 });
 
-//Auth Routes
+
+// Auth Routes
 app.use("/api/v1/auth", AuthRoutes);
+
+// Intercept login to strictly enforce email verification
+app.post("/api/v1/auth/sign-in/email", async (req: Request, res: Response, next: express.NextFunction) => {
+  try {
+    const { email } = req.body;
+    if (email) {
+      const user = await prisma.user.findUnique({ where: { email } });
+      if (user && !user.emailVerified) {
+        return res.status(403).json({ message: "Please verify your email before logging in." });
+      }
+    }
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
 // Better Auth Routes
 app.all("/api/v1/auth/*splat", toNodeHandler(auth));
